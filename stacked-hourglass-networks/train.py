@@ -105,8 +105,6 @@ if __name__=="__main__":
                 loss=criterion(output,gt_heatmaps)
 
             scaler.scale(loss).backward()
-            # loss.backward()
-            # optimizer.step()
             scaler.step(optimizer)
             scaler.update()
 

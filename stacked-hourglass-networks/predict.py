@@ -107,7 +107,6 @@ def predict():
 
     # display(pil_image)
     pil_image.save(os.path.join(args.outdir,'predict_out.png'))
-    # display(pil_image)
 
 
 if __name__=="__main__":

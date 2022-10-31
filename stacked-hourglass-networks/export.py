@@ -1,4 +1,3 @@
-from multiprocessing import dummy
 import torch
 import argparse
 from models.stacked_hg import StackedHourglassNetwork
