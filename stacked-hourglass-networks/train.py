@@ -93,44 +93,45 @@ if __name__=="__main__":
     scaler=GradScaler()
     iteration=1
     for epoch in range(1,args.num_epochs):
-        for images,annotations in tqdm(dataloader):
-            # TODO: heatmap作成はdataset側でやる datasetが返すのを image, gt_heatmapにする
-            gt_heatmaps=generate_batched_heatmaps(num_joints,num_stacks,annotations,heatmap_res)
+        with tqdm(dataloader) as pbar:
+            pbar.set_description(f"[epoch {epoch}/{args.num_epochs}]")
 
-            # size : (batch_size,3,256,256)
-            images=images.to(device)
-            gt_heatmaps=gt_heatmaps.to(device)
+            for i,(images,annotations) in  enumerate(pbar):
+                # TODO: heatmap作成はdataset側でやる datasetが返すのを image, gt_heatmapにする
+                gt_heatmaps=generate_batched_heatmaps(num_joints,num_stacks,annotations,heatmap_res)
 
-            optimizer.zero_grad()
+                # size : (batch_size,3,256,256)
+                images=images.to(device)
+                gt_heatmaps=gt_heatmaps.to(device)
 
-            with torch.autocast(device_type=device.type,enabled=args.amp):
-                output=model(images)
-                # (batch_size, stack_size, channel, height, width) だけど大丈夫？？？ stack_size増えてるけど
-                loss=criterion(output,gt_heatmaps)
+                optimizer.zero_grad()
 
-            scaler.scale(loss).backward()
-            scaler.step(optimizer)
-            scaler.update()
+                with torch.autocast(device_type=device.type,enabled=args.amp):
+                    output=model(images)
+                    # (batch_size, stack_size, channel, height, width) だけど大丈夫？？？ stack_size増えてるけど
+                    loss=criterion(output,gt_heatmaps)
 
-            # TODO: 定期的にlossを表示するようにする or tensorboardに保存
+                scaler.scale(loss).backward()
+                scaler.step(optimizer)
+                scaler.update()
 
-            if iteration% args.checkpoint_interval == 0:
-                print(iteration,args.checkpoint_interval)
-                print("save checkpoint")
-                # checkpoint保存
-                torch.save({
-                    'model':model.state_dict(),
-                    'optimizer':optimizer.state_dict(),
-                    'iteration':iteration,
-                    'epoch':epoch,
-                    "gradscaler":scaler.state_dict()
-                },args.checkpoint_path)
+                # TODO: 定期的にlossを表示するようにする or tensorboardに保存
+
+                if iteration% args.checkpoint_interval == 0:
+                    # checkpoint保存
+                    torch.save({
+                        'model':model.state_dict(),
+                        'optimizer':optimizer.state_dict(),
+                        'iteration':iteration,
+                        'epoch':epoch,
+                        "gradscaler":scaler.state_dict()
+                    },args.checkpoint_path)
 
 
-            iteration+=1
+                iteration+=1
 
-        torch.save(model.state_dict(),os.path.join(args.result_dir,f"epoch-{epoch}.pth"))
-        print(f"epoch[{epoch}] finished")
+            torch.save(model.state_dict(),os.path.join(args.result_dir,f"epoch-{epoch}.pth"))
+            print(f"epoch[{epoch}] finished")
 
     print("DONE")
 
