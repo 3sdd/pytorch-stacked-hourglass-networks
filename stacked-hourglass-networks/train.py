@@ -40,6 +40,9 @@ def get_args():
     # TODO: netType 'hg' | 'hg-stacked' が何か？
     # TODO: -task 'post' | 'post-int' 何？
 
+    parser.add_argument('--checkpoint-path',type=str,default='../results/checkpoint.pth')
+    parser.add_argument('--checkpoint-interval',type=int,default=100)
+
 
     # stack size 8
     # nModules: 1
@@ -88,6 +91,7 @@ if __name__=="__main__":
     # lr_scheduler=None
 
     scaler=GradScaler()
+    iteration=1
     for epoch in range(1,args.num_epochs):
         for images,annotations in tqdm(dataloader):
             # TODO: heatmap作成はdataset側でやる datasetが返すのを image, gt_heatmapにする
@@ -108,9 +112,22 @@ if __name__=="__main__":
             scaler.step(optimizer)
             scaler.update()
 
-            # TODO: checkpoint
             # TODO: 定期的にlossを表示するようにする or tensorboardに保存
-            print(loss)
+
+            if iteration% args.checkpoint_interval == 0:
+                print(iteration,args.checkpoint_interval)
+                print("save checkpoint")
+                # checkpoint保存
+                torch.save({
+                    'model':model.state_dict(),
+                    'optimizer':optimizer.state_dict(),
+                    'iteration':iteration,
+                    'epoch':epoch,
+                    "gradscaler":scaler.state_dict()
+                },args.checkpoint_path)
+
+
+            iteration+=1
 
         torch.save(model.state_dict(),os.path.join(args.result_dir,f"epoch-{epoch}.pth"))
         print(f"epoch[{epoch}] finished")
