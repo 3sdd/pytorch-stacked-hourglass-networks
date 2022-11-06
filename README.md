@@ -16,12 +16,12 @@ cd stacked-hourglass-networks
 ```
 
 ```sh
-python .\train.py --data-root="E:\Datasets\MPII" --cudnn-benchmark --amp
+python train.py --data-root="E:\Datasets\MPII" --cudnn-benchmark --amp
 ```
 
 
 ```sh
-python .\predict.py --model-path="../results/epoch-32.pth" --data-root="E:\Datasets\MPII"
+python predict.py --model-path="../results/epoch-32.pth" --data-root="E:\Datasets\MPII"
 ```
 
 ## ライブラリ
